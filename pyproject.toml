@@ -1,0 +1,47 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "subtitld-addon-musetalk"
+version = "0.1.0"
+description = "Subtitld add-on: high-quality generative lip-sync via MuseTalk (GPU/CUDA, torch-based)"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Subtitld", email = "jbopen@gmail.com" },
+]
+requires-python = ">=3.10"
+# MuseTalk's ML stack. torch/torchvision/torchaudio pull CUDA wheels; the
+# face/pose deps (mmcv/mmpose/mmdet) are notoriously hard to build from source
+# and are imported lazily by MuseTalk itself — see README "Known limitations".
+dependencies = [
+    "torch>=2.0",
+    "torchvision",
+    "torchaudio",
+    "diffusers>=0.27",
+    "transformers>=4.39",
+    "huggingface_hub>=0.23",
+    "accelerate",
+    "omegaconf",
+    "opencv-python-headless>=4.9",
+    "numpy",
+    "librosa",
+    "einops",
+    "gdown",
+    "soundfile",
+]
+
+[project.optional-dependencies]
+build = [
+    "pyinstaller>=6.0",
+]
+dev = [
+    "pytest>=7.4",
+]
+
+[project.scripts]
+musetalk-addon = "musetalk_addon.__main__:main"
+
+[tool.setuptools]
+packages = ["musetalk_addon"]

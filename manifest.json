@@ -1,0 +1,53 @@
+{
+  "manifest_version": 1,
+  "id": "musetalk",
+  "version": "0.1.0",
+  "display_name": "MuseTalk (GPU lip-sync)",
+  "summary": "High-quality real-time lip-sync via MuseTalk. Requires an NVIDIA GPU (CUDA). MIT-licensed, commercial use OK. Large model download (~several GB) on first use.",
+  "author": "Subtitld",
+  "homepage": "https://github.com/Subtitld/addon-musetalk",
+  "license": "MIT",
+  "executable": "musetalk-addon/musetalk-addon",
+  "protocol": 1,
+  "startup_timeout_sec": 60,
+  "platforms": ["linux", "windows"],
+  "tasks": ["video.lipsync"],
+  "config_schema": {
+    "fields": [
+      {
+        "key": "version", "type": "select", "label": "MuseTalk version",
+        "default": "v15",
+        "options": [
+          {"value": "v15", "label": "1.5 (recommended)"},
+          {"value": "v1", "label": "1.0"}
+        ],
+        "help": "MuseTalk model version. 1.5 gives sharper mouths; 1.0 is the original."
+      },
+      {
+        "key": "bbox_shift", "type": "number", "label": "Bbox shift",
+        "default": 0, "min": -20, "max": 20, "step": 1,
+        "help": "Shifts the face crop vertically to tune mouth openness. Positive opens the mouth more, negative closes it. MuseTalk 1.0 only."
+      },
+      {
+        "key": "extra_margin", "type": "number", "label": "Extra margin",
+        "default": 10, "min": 0, "max": 40, "step": 1,
+        "help": "Extra pixels added below the face crop (jaw region). MuseTalk 1.5 only."
+      },
+      {
+        "key": "batch_size", "type": "number", "label": "Batch size",
+        "default": 8, "min": 1, "max": 32, "step": 1,
+        "help": "Frames generated per UNet forward pass. Higher is faster but needs more VRAM; lower it on 'oom' errors."
+      },
+      {
+        "key": "fps", "type": "number", "label": "Output FPS",
+        "default": 25, "min": 1, "max": 60, "step": 1,
+        "help": "Frame rate of the generated video. MuseTalk is trained at 25 fps; leave at 25 for best results."
+      },
+      {
+        "key": "use_float16", "type": "boolean", "label": "Use float16",
+        "default": true,
+        "help": "Run the UNet/VAE in fp16 to cut VRAM use. Disable if you see numerical artifacts."
+      }
+    ]
+  }
+}
