@@ -104,6 +104,22 @@ jobs:
           find artefacts -type f -name 'musetalk-*' -print -exec cp {} release-files/ \;
           ls -lah release-files
 
+      - name: Drop oversized assets (GitHub 2 GiB release-asset limit)
+        shell: bash
+        run: |
+          # A CUDA torch bundle (linux) exceeds GitHub's hard 2 GiB per-asset
+          # limit. Skip any such zip (and its .sha256) so the release still
+          # publishes the platforms that fit, instead of failing entirely.
+          for f in release-files/*.zip; do
+            [ -e "$f" ] || continue
+            sz=$(stat -c%s "$f")
+            if [ "$sz" -gt 2100000000 ]; then
+              echo "::warning::Dropping $f ($sz bytes) — exceeds GitHub's 2 GiB release-asset limit"
+              rm -f "$f" "$f.sha256"
+            fi
+          done
+          ls -lah release-files
+
       - name: Create release
         uses: softprops/action-gh-release@v2
         with:
