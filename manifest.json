@@ -1,9 +1,9 @@
 {
   "manifest_version": 1,
   "id": "musetalk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "display_name": "MuseTalk (GPU lip-sync)",
-  "summary": "High-quality real-time lip-sync via MuseTalk. Requires an NVIDIA GPU (CUDA). MIT-licensed, commercial use OK. Large model download (~several GB) on first use.",
+  "summary": "High-quality real-time lip-sync via MuseTalk. Requires an NVIDIA GPU (CUDA) and Python 3.10+. MIT-licensed, commercial use OK. On first use it installs its PyTorch runtime and downloads model weights (several GB) into the add-on cache.",
   "author": "Subtitld",
   "homepage": "https://github.com/Subtitld/addon-musetalk",
   "license": "MIT",

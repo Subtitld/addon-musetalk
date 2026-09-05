@@ -6,14 +6,18 @@ on:
       - 'v*'
   workflow_dispatch:
 
-# Build per-platform PyInstaller bundles, package each into a release zip
-# matching Subtitld's add-on naming convention (musetalk-<version>-<platform>.zip),
-# and on tag push attach them to a GitHub Release. The Subtitld catalog
-# (https://subtitld.github.io/addons-catalog) picks the new release up from the
-# org's releases.
+# Build per-platform bundles and, on tag push, attach them to a GitHub Release.
 #
-# MuseTalk is CUDA-only, so only linux + windows are built (no macOS). The torch
-# bundle is large; runners may need extra disk / longer timeouts.
+# The bundle is a THIN, stdlib-only PyInstaller launcher (the bootstrap) plus
+# the add-on's own wheel under wheels/. It is a few MB — the heavy torch/CUDA
+# stack is NOT frozen; the bootstrap pip-installs it into a private cache venv
+# on first use (see musetalk_addon/_bootstrap.py). This is what lets MuseTalk
+# ship on Linux at all: a fully frozen CUDA torch bundle is > 2 GiB, which
+# GitHub refuses as a release asset.
+#
+# MuseTalk is CUDA-only, so only linux + windows are built (no macOS). The
+# Subtitld catalog (https://subtitld.github.io/addons-catalog) picks the new
+# release up from the org's releases.
 
 permissions:
   contents: write
@@ -39,15 +43,27 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install build deps
+      - name: Install build tools
         shell: bash
         run: |
+          # Only the build tooling — NOT the torch/ML runtime deps. The heavy
+          # stack is provisioned at the user's machine on first run, never
+          # frozen here.
           python -m pip install --upgrade pip
-          pip install -e '.[build]'
+          # Quote the specifier — unquoted, bash reads `>=6.0` as a redirection.
+          python -m pip install build 'pyinstaller>=6.0'
 
-      - name: Build PyInstaller bundle
+      - name: Build the add-on wheel
         shell: bash
         run: |
+          rm -rf dist
+          python -m build --wheel
+          ls -lah dist
+
+      - name: Build PyInstaller bootstrap bundle
+        shell: bash
+        run: |
+          # Bundles dist/subtitld_addon_musetalk-*.whl under wheels/ (see spec).
           pyinstaller pyinstaller.spec --noconfirm
 
       - name: Stage release archive
@@ -102,22 +118,6 @@ jobs:
         run: |
           mkdir -p release-files
           find artefacts -type f -name 'musetalk-*' -print -exec cp {} release-files/ \;
-          ls -lah release-files
-
-      - name: Drop oversized assets (GitHub 2 GiB release-asset limit)
-        shell: bash
-        run: |
-          # A CUDA torch bundle (linux) exceeds GitHub's hard 2 GiB per-asset
-          # limit. Skip any such zip (and its .sha256) so the release still
-          # publishes the platforms that fit, instead of failing entirely.
-          for f in release-files/*.zip; do
-            [ -e "$f" ] || continue
-            sz=$(stat -c%s "$f")
-            if [ "$sz" -gt 2100000000 ]; then
-              echo "::warning::Dropping $f ($sz bytes) — exceeds GitHub's 2 GiB release-asset limit"
-              rm -f "$f" "$f.sha256"
-            fi
-          done
           ls -lah release-files
 
       - name: Create release
